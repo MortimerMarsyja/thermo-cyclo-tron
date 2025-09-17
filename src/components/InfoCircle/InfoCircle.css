@@ -1,0 +1,16 @@
+.infoCircle{
+    height: 300px;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    background-color: aliceblue;
+    border-radius: 50%;
+    display: flex;
+    border: 12px solid #ccc;
+}
+
+.circleLabel{
+    font-size: 4rem;
+    font-weight: bold;
+    color: #ccc;
+}
