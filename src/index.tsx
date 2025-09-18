@@ -9,6 +9,7 @@ import WelcomeView from "./views/Welcome/WelcomeView";
 import NewExperimentView from "./views/NewExperiment/NewExperimentView";
 import HeatingView from "./views/HeatingView/HeatingView";
 import { ExperimentProvider } from "./context/ExperimentContext";
+import ResultsView from "./views/ResultsView/resultsView";
 
 const viewConstants = {
   MENU: "menu",
@@ -46,13 +47,22 @@ const viewRenderer = (
         themeColors={themeColors}
       />
     );
-  if (view === "heating") return (
-    <HeatingView 
-      isDarkMode={isDarkMode} 
-      themeColors={themeColors} 
-      navigate={viewChanger}
-    />
-  );
+  if (view === "heating")
+    return (
+      <HeatingView
+        isDarkMode={isDarkMode}
+        themeColors={themeColors}
+        navigate={viewChanger}
+      />
+    );
+  if (view === "results")
+    return (
+      <ResultsView
+        isDarkMode={isDarkMode}
+        themeColors={themeColors}
+        navigate={viewChanger}
+      />
+    );
 
   return;
 };
