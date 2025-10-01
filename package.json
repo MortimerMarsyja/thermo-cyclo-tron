@@ -4,12 +4,9 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"preview": "vite preview",
-		"start": "node server.js",
-		"heroku-postbuild": "npm run build"
+		"preview": "vite preview"
 	},
 	"dependencies": {
-		"express": "^4.21.2",
 		"preact": "^10.26.9",
 		"preact-iso": "^2.10.0",
 		"preact-render-to-string": "^6.6.1",
