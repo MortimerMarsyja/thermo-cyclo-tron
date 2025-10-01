@@ -27,7 +27,7 @@ ${variables.exports};
     }),
     preact({
       prerender: {
-        enabled: true,
+        enabled: false,
         renderTarget: "#app",
       },
     }),

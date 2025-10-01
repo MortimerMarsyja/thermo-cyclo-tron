@@ -201,6 +201,104 @@ export default function TermoCicloTronConfig({
     });
   }, [data]);
 
+  // Custom shape component for trapezoids
+  const TrapezoidBar = (props: any) => {
+    const { payload, x, y, width, height } = props;
+    if (!payload) return null;
+
+    const currentTemp = payload.temp;
+    const nextTemp = payload.nextTemp;
+    const stageIndex = payload.stageIndex;
+
+    // For the last bar, just draw a rectangle
+    if (stageIndex === barData.length - 1) {
+      const path = `
+        M ${x} ${y + height}
+        L ${x} ${y}
+        L ${x + width} ${y}
+        L ${x + width} ${y + height}
+        Z
+      `;
+
+      return (
+        <path
+          d={path}
+          fill={`url(#gradient${payload.stageIndex})`}
+          stroke={getStageColor(payload.stageIndex)}
+          strokeWidth={2}
+          style={{ cursor: "pointer" }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            if (payload && payload.stageIndex !== undefined) {
+              handleStageClick(payload.stageIndex);
+            }
+          }}
+        />
+      );
+    }
+
+    // Get the next bar's data for proper connection
+    const nextBarData = barData[stageIndex + 1];
+    if (!nextBarData) {
+      // Fallback to rectangle if no next bar
+      const path = `
+        M ${x} ${y + height}
+        L ${x} ${y}
+        L ${x + width} ${y}
+        L ${x + width} ${y + height}
+        Z
+      `;
+
+      return (
+        <path
+          d={path}
+          fill={`url(#gradient${payload.stageIndex})`}
+          stroke={getStageColor(payload.stageIndex)}
+          strokeWidth={2}
+          style={{ cursor: "pointer" }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            if (payload && payload.stageIndex !== undefined) {
+              handleStageClick(payload.stageIndex);
+            }
+          }}
+        />
+      );
+    }
+
+    // Calculate the Y position for the next temperature using the chart's domain
+    const minTemp = payload.minTemp - 5;
+    const currentTempFromMin = currentTemp - minTemp;
+    const nextTempFromMin = nextTemp - minTemp;
+    const tempRatio = nextTempFromMin / currentTempFromMin;
+    const nextY = y + height - height * tempRatio;
+
+    // Draw trapezoid
+    const path = `
+      M ${x} ${y + height}
+      L ${x} ${y}
+      L ${x + width} ${nextY}
+      L ${x + width} ${y + height}
+      Z
+    `;
+
+    return (
+      <path
+        d={path}
+        fill={`url(#gradient${payload.stageIndex})`}
+        stroke={getStageColor(payload.stageIndex)}
+        strokeWidth={2}
+        style={{ cursor: "pointer" }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          if (payload && payload.stageIndex !== undefined) {
+            handleStageClick(payload.stageIndex);
+          }
+        }}
+      />
+    );
+  };
+
   const renderChart = () => {
     // Calculate separator positions for different stages
     const separatorPositions = [];
@@ -348,108 +446,7 @@ export default function TermoCicloTronConfig({
             <Bar
               dataKey="temp"
               style={{ cursor: "pointer" }}
-              shape={(props: any) => {
-                const { payload, x, y, width, height } = props;
-                if (!payload) return null;
-
-                const currentTemp = payload.temp;
-                const nextTemp = payload.nextTemp;
-                const stageIndex = payload.stageIndex;
-
-                // For the last bar, just draw a rectangle
-                if (stageIndex === barData.length - 1) {
-                  const path = `
-                    M ${x} ${y + height}
-                    L ${x} ${y}
-                    L ${x + width} ${y}
-                    L ${x + width} ${y + height}
-                    Z
-                  `;
-
-                  return (
-                    <path
-                      d={path}
-                      fill={`url(#gradient${payload.stageIndex})`}
-                      stroke={getStageColor(payload.stageIndex)}
-                      strokeWidth={2}
-                      style={{ cursor: "pointer" }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        if (payload && payload.stageIndex !== undefined) {
-                          handleStageClick(payload.stageIndex);
-                        }
-                      }}
-                    />
-                  );
-                }
-
-                // Get the next bar's data for proper connection
-                const nextBarData = barData[stageIndex + 1];
-                if (!nextBarData) {
-                  // Fallback to rectangle if no next bar
-                  const path = `
-                    M ${x} ${y + height}
-                    L ${x} ${y}
-                    L ${x + width} ${y}
-                    L ${x + width} ${y + height}
-                    Z
-                  `;
-
-                  return (
-                    <path
-                      d={path}
-                      fill={`url(#gradient${payload.stageIndex})`}
-                      stroke={getStageColor(payload.stageIndex)}
-                      strokeWidth={2}
-                      style={{ cursor: "pointer" }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        if (payload && payload.stageIndex !== undefined) {
-                          handleStageClick(payload.stageIndex);
-                        }
-                      }}
-                    />
-                  );
-                }
-
-                // Calculate the Y position for the next temperature using the chart's domain
-                // Recharts uses domain ["dataMin - 5", "dataMax + 10"]
-                const minTemp = payload.minTemp - 5;
-
-                // Calculate where the next temperature should be positioned
-                // Based on the current bar's scale mapping
-                const currentTempFromMin = currentTemp - minTemp;
-                const nextTempFromMin = nextTemp - minTemp;
-
-                // Calculate the ratio and apply it to get the next Y position
-                const tempRatio = nextTempFromMin / currentTempFromMin;
-                const nextY = y + height - height * tempRatio;
-
-                // Draw trapezoid connecting this bar to the next bar's actual position
-                const path = `
-                M ${x} ${y + height}
-                L ${x} ${y}
-                L ${x + width} ${nextY}
-                L ${x + width} ${y + height}
-                Z
-              `;
-
-                return (
-                  <path
-                    d={path}
-                    fill={`url(#gradient${payload.stageIndex})`}
-                    stroke={getStageColor(payload.stageIndex)}
-                    strokeWidth={2}
-                    style={{ cursor: "pointer" }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      if (payload && payload.stageIndex !== undefined) {
-                        handleStageClick(payload.stageIndex);
-                      }
-                    }}
-                  />
-                );
-              }}
+              shape={<TrapezoidBar />}
             >
               {barData.map((_, index) => (
                 <Cell key={`cell-${index}`} />
