@@ -446,7 +446,7 @@ export default function TermoCicloTronConfig({
             <Bar
               dataKey="temp"
               style={{ cursor: "pointer" }}
-              shape={<TrapezoidBar />}
+              shape={TrapezoidBar}
             >
               {barData.map((_, index) => (
                 <Cell key={`cell-${index}`} />
