@@ -68,7 +68,7 @@ const viewRenderer = (
 };
 
 export function App() {
-  const [view, setView] = useState(viewConstants.NEW_EXPERIMENT);
+  const [view, setView] = useState(viewConstants.WELCOME);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Theme-aware colors
