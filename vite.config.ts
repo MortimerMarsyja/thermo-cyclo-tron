@@ -25,11 +25,6 @@ ${variables.exports};
       },
       include: "**/*.svg?react",
     }),
-    preact({
-      prerender: {
-        enabled: false,
-        renderTarget: "#app",
-      },
-    }),
+    preact(),
   ],
 });
