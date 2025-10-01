@@ -4,7 +4,7 @@ import svgr from "vite-plugin-svgr";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/termo-ciclo-tron/',
+  base: '/thermo-cyclo-tron/',
   plugins: [
     svgr({
       svgrOptions: {
