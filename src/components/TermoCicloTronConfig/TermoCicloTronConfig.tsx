@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Bar,
   Cell,
+  Rectangle,
 } from "recharts";
 import CircleButton from "../CircleButton/CircleButton";
 import {
@@ -201,10 +202,14 @@ export default function TermoCicloTronConfig({
     });
   }, [data]);
 
-  // Custom shape component for trapezoids
-  const TrapezoidBar = (props: any) => {
+  // Custom shape component for trapezoids - using explicit function declaration
+  function TrapezoidBar(props: any) {
     const { payload, x, y, width, height } = props;
-    if (!payload) return null;
+
+    if (!payload || x === undefined || y === undefined) {
+      console.log('TrapezoidBar: missing props', { payload, x, y, width, height });
+      return null;
+    }
 
     const currentTemp = payload.temp;
     const nextTemp = payload.nextTemp;
@@ -227,7 +232,7 @@ export default function TermoCicloTronConfig({
           stroke={getStageColor(payload.stageIndex)}
           strokeWidth={2}
           style={{ cursor: "pointer" }}
-          onMouseDown={(e) => {
+          onClick={(e: any) => {
             e.stopPropagation();
             if (payload && payload.stageIndex !== undefined) {
               handleStageClick(payload.stageIndex);
@@ -256,7 +261,7 @@ export default function TermoCicloTronConfig({
           stroke={getStageColor(payload.stageIndex)}
           strokeWidth={2}
           style={{ cursor: "pointer" }}
-          onMouseDown={(e) => {
+          onClick={(e: any) => {
             e.stopPropagation();
             if (payload && payload.stageIndex !== undefined) {
               handleStageClick(payload.stageIndex);
@@ -289,7 +294,7 @@ export default function TermoCicloTronConfig({
         stroke={getStageColor(payload.stageIndex)}
         strokeWidth={2}
         style={{ cursor: "pointer" }}
-        onMouseDown={(e) => {
+        onClick={(e: any) => {
           e.stopPropagation();
           if (payload && payload.stageIndex !== undefined) {
             handleStageClick(payload.stageIndex);
@@ -297,7 +302,7 @@ export default function TermoCicloTronConfig({
         }}
       />
     );
-  };
+  }
 
   const renderChart = () => {
     // Calculate separator positions for different stages
