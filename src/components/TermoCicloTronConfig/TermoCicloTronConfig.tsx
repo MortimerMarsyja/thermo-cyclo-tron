@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "preact/hooks";
+import { useState, useMemo, useEffect, useRef } from "preact/hooks";
 import {
   ResponsiveContainer,
   BarChart,
@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Bar,
   Cell,
-  Rectangle,
 } from "recharts";
 import CircleButton from "../CircleButton/CircleButton";
 import {
@@ -57,6 +56,8 @@ export default function TermoCicloTronConfig({
   navigate,
 }: TermoCicloTronConfigProps) {
   const { config, updateConfig } = useExperimentConfig();
+  const chartRef = useRef<any>(null);
+
   // Always start with the config stages if available, otherwise use initialData
   const [data, setData] = useState(
     config.stages.length > 0 ? config.stages : initialData
@@ -202,83 +203,54 @@ export default function TermoCicloTronConfig({
     });
   }, [data]);
 
-  // Custom shape component for trapezoids - using explicit function declaration
-  function TrapezoidBar(props: any) {
-    const { payload, x, y, width, height } = props;
+  // Render custom SVG trapezoids using RenderCustomBarLabel approach
+  const renderTrapezoid = (props: any) => {
+    const { x, y, width, height, index } = props;
 
-    if (!payload || x === undefined || y === undefined) {
-      console.log('TrapezoidBar: missing props', { payload, x, y, width, height });
-      return null;
-    }
+    if (x === undefined || y === undefined) return null;
 
-    const currentTemp = payload.temp;
-    const nextTemp = payload.nextTemp;
-    const stageIndex = payload.stageIndex;
+    const bar = barData[index];
+    if (!bar) return null;
 
-    // For the last bar, just draw a rectangle
-    if (stageIndex === barData.length - 1) {
-      const path = `
-        M ${x} ${y + height}
-        L ${x} ${y}
-        L ${x + width} ${y}
-        L ${x + width} ${y + height}
-        Z
-      `;
-
+    if (index === barData.length - 1) {
+      // Last bar - rectangle
       return (
-        <path
-          d={path}
-          fill={`url(#gradient${payload.stageIndex})`}
-          stroke={getStageColor(payload.stageIndex)}
-          strokeWidth={2}
-          style={{ cursor: "pointer" }}
-          onClick={(e: any) => {
-            e.stopPropagation();
-            if (payload && payload.stageIndex !== undefined) {
-              handleStageClick(payload.stageIndex);
-            }
-          }}
-        />
+        <g key={`bar-${index}`}>
+          <rect
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            fill={`url(#gradient${index})`}
+            stroke={getStageColor(index)}
+            strokeWidth={2}
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleStageClick(index)}
+          />
+        </g>
       );
     }
 
-    // Get the next bar's data for proper connection
-    const nextBarData = barData[stageIndex + 1];
-    if (!nextBarData) {
-      // Fallback to rectangle if no next bar
-      const path = `
-        M ${x} ${y + height}
-        L ${x} ${y}
-        L ${x + width} ${y}
-        L ${x + width} ${y + height}
-        Z
-      `;
+    // Trapezoid - calculate next bar's Y position
+    const nextBar = barData[index + 1];
+    if (!nextBar) return null;
 
-      return (
-        <path
-          d={path}
-          fill={`url(#gradient${payload.stageIndex})`}
-          stroke={getStageColor(payload.stageIndex)}
-          strokeWidth={2}
-          style={{ cursor: "pointer" }}
-          onClick={(e: any) => {
-            e.stopPropagation();
-            if (payload && payload.stageIndex !== undefined) {
-              handleStageClick(payload.stageIndex);
-            }
-          }}
-        />
-      );
-    }
+    // Calculate Y position for next temperature
+    const minTemp = Math.min(...barData.map(d => d.temp)) - 5;
+    const maxTemp = Math.max(...barData.map(d => d.temp)) + 10;
+    const tempRange = maxTemp - minTemp;
 
-    // Calculate the Y position for the next temperature using the chart's domain
-    const minTemp = payload.minTemp - 5;
-    const currentTempFromMin = currentTemp - minTemp;
-    const nextTempFromMin = nextTemp - minTemp;
-    const tempRatio = nextTempFromMin / currentTempFromMin;
-    const nextY = y + height - height * tempRatio;
+    const currentTempNorm = (bar.temp - minTemp) / tempRange;
+    const nextTempNorm = (nextBar.temp - minTemp) / tempRange;
 
-    // Draw trapezoid
+    // Since recharts inverts Y axis, higher temp = lower Y
+    const plotHeight = 450 - 30 - 80; // chart height - top margin - bottom margin
+    const nextYOffset = plotHeight * (1 - nextTempNorm);
+    const currentYOffset = plotHeight * (1 - currentTempNorm);
+
+    const baseY = 30; // top margin
+    const nextY = baseY + nextYOffset;
+
     const path = `
       M ${x} ${y + height}
       L ${x} ${y}
@@ -288,19 +260,16 @@ export default function TermoCicloTronConfig({
     `;
 
     return (
-      <path
-        d={path}
-        fill={`url(#gradient${payload.stageIndex})`}
-        stroke={getStageColor(payload.stageIndex)}
-        strokeWidth={2}
-        style={{ cursor: "pointer" }}
-        onClick={(e: any) => {
-          e.stopPropagation();
-          if (payload && payload.stageIndex !== undefined) {
-            handleStageClick(payload.stageIndex);
-          }
-        }}
-      />
+      <g key={`bar-${index}`}>
+        <path
+          d={path}
+          fill={`url(#gradient${index})`}
+          stroke={getStageColor(index)}
+          strokeWidth={2}
+          style={{ cursor: 'pointer' }}
+          onClick={() => handleStageClick(index)}
+        />
+      </g>
     );
   }
 
@@ -327,6 +296,7 @@ export default function TermoCicloTronConfig({
       <div style={{ width: "100%", height: "450px", position: "relative" }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            ref={chartRef}
             data={barData}
             margin={{ top: 30, right: 30, left: 30, bottom: 80 }}
             barCategoryGap={0}
@@ -450,13 +420,8 @@ export default function TermoCicloTronConfig({
 
             <Bar
               dataKey="temp"
-              style={{ cursor: "pointer" }}
-              shape={TrapezoidBar}
-            >
-              {barData.map((_, index) => (
-                <Cell key={`cell-${index}`} />
-              ))}
-            </Bar>
+              shape={renderTrapezoid}
+            />
           </BarChart>
         </ResponsiveContainer>
 
