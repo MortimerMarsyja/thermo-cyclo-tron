@@ -203,16 +203,17 @@ export default function TermoCicloTronConfig({
     });
   }, [data]);
 
-  // Render custom SVG trapezoids using RenderCustomBarLabel approach
+  // Render custom SVG trapezoids
   const renderTrapezoid = (props: any) => {
-    const { x, y, width, height, index } = props;
+    const { x, y, width, height, index, payload } = props;
 
-    if (x === undefined || y === undefined) return null;
+    if (x === undefined || y === undefined || !payload) return null;
 
-    const bar = barData[index];
-    if (!bar) return null;
+    const currentTemp = payload.temp;
+    const nextTemp = payload.nextTemp;
+    const stageIndex = payload.stageIndex;
 
-    if (index === barData.length - 1) {
+    if (stageIndex === barData.length - 1) {
       // Last bar - rectangle
       return (
         <g key={`bar-${index}`}>
@@ -221,35 +222,24 @@ export default function TermoCicloTronConfig({
             y={y}
             width={width}
             height={height}
-            fill={`url(#gradient${index})`}
-            stroke={getStageColor(index)}
+            fill={`url(#gradient${stageIndex})`}
+            stroke={getStageColor(stageIndex)}
             strokeWidth={2}
             style={{ cursor: 'pointer' }}
-            onClick={() => handleStageClick(index)}
+            onClick={() => handleStageClick(stageIndex)}
           />
         </g>
       );
     }
 
-    // Trapezoid - calculate next bar's Y position
-    const nextBar = barData[index + 1];
-    if (!nextBar) return null;
+    // Trapezoid - use the height ratio based on temperature difference
+    const minTemp = payload.minTemp - 5;
+    const currentTempFromMin = currentTemp - minTemp;
+    const nextTempFromMin = nextTemp - minTemp;
 
-    // Calculate Y position for next temperature
-    const minTemp = Math.min(...barData.map(d => d.temp)) - 5;
-    const maxTemp = Math.max(...barData.map(d => d.temp)) + 10;
-    const tempRange = maxTemp - minTemp;
-
-    const currentTempNorm = (bar.temp - minTemp) / tempRange;
-    const nextTempNorm = (nextBar.temp - minTemp) / tempRange;
-
-    // Since recharts inverts Y axis, higher temp = lower Y
-    const plotHeight = 450 - 30 - 80; // chart height - top margin - bottom margin
-    const nextYOffset = plotHeight * (1 - nextTempNorm);
-    const currentYOffset = plotHeight * (1 - currentTempNorm);
-
-    const baseY = 30; // top margin
-    const nextY = baseY + nextYOffset;
+    // Calculate the ratio to determine next bar's top position
+    const tempRatio = nextTempFromMin / currentTempFromMin;
+    const nextY = y + height - height * tempRatio;
 
     const path = `
       M ${x} ${y + height}
@@ -263,11 +253,11 @@ export default function TermoCicloTronConfig({
       <g key={`bar-${index}`}>
         <path
           d={path}
-          fill={`url(#gradient${index})`}
-          stroke={getStageColor(index)}
+          fill={`url(#gradient${stageIndex})`}
+          stroke={getStageColor(stageIndex)}
           strokeWidth={2}
           style={{ cursor: 'pointer' }}
-          onClick={() => handleStageClick(index)}
+          onClick={() => handleStageClick(stageIndex)}
         />
       </g>
     );
