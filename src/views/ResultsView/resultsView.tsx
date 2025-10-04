@@ -32,22 +32,18 @@ const generatePCRData = (cycles: number, samples: string[]) => {
         let fluorescence;
 
         if (i === 0) {
+          // Sample 1 - Positive with amplification
           fluorescence =
             1.8 / (1 + Math.exp(-0.9 * (cycle - 22))) + Math.random() * 0.05;
         } else if (i === 1) {
-          fluorescence =
-            1.0 / (1 + Math.exp(-0.9 * (cycle - 20))) + Math.random() * 0.05;
+          // Sample 2 - Negative, flat horizontal line
+          fluorescence = 0.01 + Math.random() * 0.008;
         } else if (i === 2) {
-          if (cycle < 15) {
-            fluorescence = 0.02 + cycle * 0.005 + Math.random() * 0.02;
-          } else {
-            const cyclesFromStart = cycle - 15;
-            fluorescence =
-              0.08 * Math.pow(1.4, cyclesFromStart) + Math.random() * 0.05;
-          }
+          // Sample 3 - Negative, flat horizontal line
+          fluorescence = 0.01 + Math.random() * 0.008;
         } else if (i === 3) {
-          fluorescence =
-            0.01 + Math.sin(cycle * 0.2) * 0.008 + Math.random() * 0.015;
+          // Sample 4 - Negative, flat horizontal line
+          fluorescence = 0.01 + Math.random() * 0.008;
         }
 
         fluorescence = 2 + fluorescence * 40;
@@ -70,11 +66,11 @@ const generateThresholdData = (samples: string[]) => {
       ct = 22.0;
       concentration = 1800;
     } else if (sample.includes("Sample 2")) {
-      ct = 20.0;
-      concentration = 2500;
+      ct = 0;
+      concentration = 0;
     } else if (sample.includes("Sample 3")) {
-      ct = 17.5;
-      concentration = 1600;
+      ct = 0;
+      concentration = 0;
     } else if (sample.includes("Sample 4")) {
       ct = 0;
       concentration = 0;
@@ -106,8 +102,8 @@ const ResultsView = ({ themeColors, navigate }: ResultsViewProps) => {
 
   const samples = [
     "Sample 1 (Positive)",
-    "Sample 2 (Positive)",
-    "Sample 3 (Positive)",
+    "Sample 2 (Negative)",
+    "Sample 3 (Negative)",
     "Sample 4 (Negative)",
   ];
   const cycles = 40;
